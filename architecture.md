@@ -74,17 +74,17 @@
 │   ├── routes/
 │   │   ├── employee.routes.ts
 │   │   ├── salary.routes.ts
-│   │   └── dashboard.routes.ts (Unified Analytics & Summary Router)
+│   │   └── analytics.routes.ts (Analytics Router)
 │   │
 │   ├── controllers/
 │   │   ├── employee.controller.ts
 │   │   ├── salary.controller.ts
-│   │   └── dashboard.controller.ts
+│   │   └── analytics.controller.ts
 │   │
 │   ├── services/
 │   │   ├── employee.service.ts
 │   │   ├── salary.service.ts
-│   │   └── dashboard.service.ts (Compiles all data matrix components)
+│   │   └── analytics.service.ts (Compiles all data matrix components)
 │   │
 │   └── schemas/
 │       ├── employee.schema.ts
@@ -179,6 +179,7 @@ Stores country and currency information.
 | id | UUID | Primary Key |
 | name | String | Unique |
 | currency_code | String | |
+| usd_multiplier | Decimal | Static exchange rate to USD |
 | created_at | Timestamp | |
 
 ---
@@ -296,11 +297,12 @@ Endpoints:
 
 Responsibilities: Enforces historical log immutability via sequential execution blocks, handles automated server-side calculation of Total CTC (Base + Bonus + Allowances), and manages atomic transaction boundaries (marking previous salary logs as inactive while inserting the new record).
 
-## 5.3 Unified Dashboard & Analytics Module
+## 5.3 Analytics Module
 Endpoints: 
-* GET /api/dashboard/overview
+* GET /api/analytics
+* GET /api/analytics/export
 
-Responsibilities: Compiles and flattens all high-level summary KPIs (Active headcount splits, corporate payroll expenditure, average/median CTC metrics), multi-dimension analytical breakdowns (Department, Designation, Country distributions), statistical salary band frequencies ($0-25k, $25k-50k, etc.), and the 5 most recent salary revision logs into a singular JSON payload to prevent concurrent read-lock overhead in SQLite
+Responsibilities: Compiles and flattens all high-level summary KPIs (Active headcount splits, corporate payroll expenditure, average/median CTC metrics), multi-dimension analytical breakdowns (Department, Designation, Country distributions), statistical salary band frequencies ($0-25k, $25k-50k, etc.), and the 5 most recent salary revision logs into a singular JSON payload (reactive to Country, Department, and Status filters), and providing on-demand flat CSV report exports to prevent concurrent read-lock overhead in SQLite
 
 ---
 
@@ -340,10 +342,10 @@ Structured JSON Network Response Transmission
 
 - Pivoted to SQLite Engine: Swapped from PostgreSQL to a local file system storage database layer to guarantee the reviewer enjoys a zero-dependency, zero-configuration onboarding experience.
 
-- Consolidated Single-Endpoint Aggregation: Merged separate analytical and dashboard summary endpoints into a singular route payload (/api/dashboard/overview) to run gracefully within SQLite's single-threaded nature, minimizing thread-lock overhead and preventing client UI flickering.
+- Consolidated Single-Endpoint Aggregation: Merged separate analytical and dashboard summary endpoints into a singular route payload (/api/analytics) to run gracefully within SQLite's single-threaded nature, minimizing thread-lock overhead and preventing client UI flickering.
 
 - Strict Revision Immutability: Salary adjustments are exclusively write-only inserts rather than destructive inline table adjustments, preserving a complete corporate audit trail.
 
-- Multi-Currency Standardization: All multi-currency benchmarks are converted cleanly on the server into a standard reporting currency profile (USD) using a deterministic, internally seeded translation matrix to protect performance.
+- Multi-Currency Standardization: All multi-currency benchmarks are converted cleanly on the server into a standard reporting currency profile (USD) using a deterministic, internally seeded translation matrix (via the `usd_multiplier` column in the `countries` table) to protect performance.
 
 - Scale and Memory Guardrails: Coupled server-side query pagination with frontend list virtualization to ensure the application processes the 10,000-employee dataset smoothly without browser thread locks or DOM bloat.

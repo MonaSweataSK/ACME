@@ -245,14 +245,14 @@ Enforces historical compensation data log immutability via sequential execution 
 
 ---
 
-## Unified Dashboard & Analytics API
+## Analytics API
 
-### Dashboard Overview
+### Analytics
 
 **Endpoint**
 
 ```http
-GET /dashboard/overview
+GET /analytics
 ```
 
 **Description**
@@ -323,6 +323,37 @@ This single-pass engine uses a localized lookup matrix window on the backend to 
 ```
 
 ---
+
+
+
+---
+
+### Export Analytics
+
+**Endpoint**
+
+`http
+GET /analytics/export
+`
+
+**Query Parameters**
+
+| Parameter | Type | Description |
+|---|---|---|
+| departmentId | string | Filter export by department UUID |
+| countryId | string | Filter export by country UUID |
+| status | string | Filter export by ACTIVE / INACTIVE |
+
+**Description**
+
+On-demand export generation translating active analytical configurations into flat CSV formatting for standard reporting workflows. Returns a downloadable .csv file.
+
+**Response**
+
+`csv
+Employee Code,Name,Department,Designation,Country,Status,Base Salary,Bonus,Allowances,Total CTC
+EMP-00001,John Doe,Engineering,Software Engineer,India,ACTIVE,1200000,100000,50000,1350000
+`
 
 ## Master Data APIs
 

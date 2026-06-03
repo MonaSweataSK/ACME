@@ -1,26 +1,25 @@
 # Requirements Document: ACME Salary Management System
 
 ## 1. Goal
-Replace ACME's Excel-based salary management process with a secure, performant web application that allows the HR Manager to view, manage, and analyze salary data for 10,000 employees across multiple countries from a single, reliable, and fluid interface[cite: 1, 2].
+Replace ACME's Excel-based salary management process with a secure, performant web application that allows the HR Manager to view, manage, and analyze salary data for 10,000 employees across multiple countries from a single, reliable, and fluid interface.
 
 ---
 
 ## 2. Background & Problem
-The HR team currently manages salary data for 10,000 employees across multiple countries using static spreadsheets[cite: 1, 2]. This creates critical operational bottlenecks:
+The HR team currently manages salary data for 10,000 employees across multiple countries using static spreadsheets. This creates critical operational bottlenecks:
 *   **Reliability Risk:** Manual edits introduce human error, and massive spreadsheets are highly vulnerable to corruption.
-*   **Discoverability Problem:** Answering organizational questions (e.g., *"What is the average salary in the India Engineering team?"*) requires manual filtering, manual formula entry, and brittle analysis[cite: 2].
-*   **No Audit Trail:** There is zero historical logging showing who modified a salary, when the modification happened, or the business context behind it[cite: 2].
-*   **Scale Friction:** Managing and updating a 10,000-row spreadsheet causes heavy local performance lag, creating UI frustration for the HR team[cite: 1, 2].
+*   **Discoverability Problem:** Answering organizational questions (e.g., *"What is the average salary in the India Engineering team?"*) requires manual filtering, manual formula entry, and brittle analysis.
+*   **Scale Friction:** Managing and updating a 10,000-row spreadsheet causes heavy local performance lag, creating UI frustration for the HR team.
 
 ---
 
 ## 3. User Persona
 ### Primary User: HR Manager
 The HR Manager requires an intuitive software interface to:
-*   Quickly locate any employee's profile, active compensation structure, and comprehensive salary history[cite: 2].
-*   Execute salary adjustments with a mandatory, documented reason to preserve administrative integrity[cite: 2].
-*   Gain an immediate overview of compensation trends across departments, countries, and designations without writing database queries[cite: 2, 3].
-*   Seamlessly onboard new hires into the corporate database[cite: 2].
+*   Quickly locate any employee's profile, active compensation structure, and comprehensive salary history.
+*   Edit employee records, execute salary adjustments with a mandatory, documented reason to preserve administrative integrity.
+*   Gain an immediate overview of compensation trends across departments, countries, and designations without writing database queries.
+*   Seamlessly onboard new hires into the corporate database.
 
 ---
 
@@ -29,31 +28,31 @@ The HR Manager requires an intuitive software interface to:
 ### 4.1 Employee Management
 
 #### 4.1.1 Employee List
-*   A clean, paginated, searchable interface containing all 10,000 records[cite: 1, 2].
-*   **Search Vector Targets:** Employee Name, Employee ID, and Email Address[cite: 2].
+*   A clean, paginated, searchable interface containing all 10,000 records.
+*   **Search Vector Targets:** Employee Name, Employee ID, and Email Address.
 
 #### 4.1.2 Employee Filters
 Instant list filtering by:
 *   Country
 *   Department
 *   Designation
-*   Employment Status (Active / Inactive)[cite: 2]
+*   Employment Status (Active / Inactive)
 
 #### 4.1.3 Employee Detail View
 A comprehensive structural overview detailing:
-*   Personal details (Name, Contact, Identifiers)[cite: 2].
-*   Current Active Salary Details (Base, Bonus, Allowances, Total CTC)[cite: 2].
-*   Chronological, immutable historical salary log[cite: 2].
+*   Personal details (Name, Contact, Identifiers).
+*   Current Active Salary Details (Base, Bonus, Allowances, Total CTC).
+*   Chronological, immutable historical salary log.
 
 #### 4.1.4 Onboarding (Add Employee)
 Capture initial employee profiles including:
-*   Core demographic profiles[cite: 2].
-*   Department, Designation, and operational Country placement[cite: 2].
-*   Initial Salary baseline structure[cite: 2].
+*   Core demographic profiles.
+*   Department, Designation, and operational Country placement.
+*   Initial Salary baseline structure.
 
 #### 4.1.5 Profile Management (Edit Employee)
-*   Modify dynamic organizational data points (Name, Department, Designation, Country)[cite: 2].
-*   Administrative toggle to change status (e.g., marking an employee as Inactive)[cite: 2].
+*   Modify dynamic organizational data points (Name, Department, Designation, Country).
+*   Administrative toggle to change status (e.g., marking an employee as Inactive).
 
 ### 4.2 Salary Management & Versioning
 
@@ -62,34 +61,40 @@ Real-time calculated visibility into current remuneration breakdowns:
 *   Base Salary
 *   Bonus Structure
 *   Allowances
-*   **Total CTC:** Calculated on the fly or systematically stored via backend formulas[cite: 2].
-*   Effective Date[cite: 2]
+*   **Total CTC:** Calculated on the fly or systematically stored via backend formulas.
+*   Effective Date
 
 #### 4.2.2 Salary Revision Actions
 Executing adjustments triggers specific immutability parameters:
-*   **Fields Required:** Effective Date, Revision Reason, Base Salary, Bonus, and Allowances[cite: 2].
-*   **Immutability Rule:** Revisions create a new historical record version. Previous salary logs are permanently read-only and cannot be updated or erased to maintain compliance audit trails[cite: 2].
+*   **Fields Required:** Effective Date, Revision Reason, Base Salary, Bonus, and Allowances.
+*   **Immutability Rule:** Revisions create a new historical record version. Previous salary logs are permanently read-only and cannot be updated or erased to maintain compliance audit trails.
 
 #### 4.2.3 Multi-Currency Handling
-*   Salaries are input and saved natively matching the local currency assigned to the employee’s country[cite: 2].
-*   Cross-border analytics auto-convert local baselines using a deterministic, internal translation engine into a baseline Reporting Currency (**USD**)[cite: 2].
+*   Salaries are input and saved natively matching the local currency assigned to the employee’s country.
+*   Cross-border analytics auto-convert local baselines using a deterministic, internal translation engine into a baseline Reporting Currency (**USD**).
 
 ### 4.3 Analytics & Insights (High Performance Dashboard)
 
 #### 4.3.1 Consolidated Analytics Engine
-To avoid network request concurrency bottlenecks and UI flashing when loading data for 10,000 employees, individual micro-endpoints are completely bypassed[cite: 1]. The dashboard leverages a unified single-pass data hydration engine[cite: 3].
+To avoid network request concurrency bottlenecks and UI flashing when loading data for 10,000 employees, the dashboard leverages a unified single-pass data hydration engine.
 
 A single payload provides the UI with:
-*   **Global Summary Metrics:** Total Headcount, Active vs. Inactive splits, aggregate payroll costs, organization-wide average, and median CTC metrics[cite: 2, 3].
-*   **Department Breakdown:** Headcount, minimum/maximum ranges, average allocations, and total payroll spends categorized per department[cite: 2, 3].
-*   **Designation Analytics:** Structural distribution arrays showing employee concentrations and associated average salaries across functional job tiers[cite: 2, 3].
-*   **Country Distribution:** Operational headcount matrices, localized currency tallies, and converted normalized USD payroll balances for global benchmarking[cite: 2, 3].
-*   **Salary Band Distribution:** Stratified workforce distribution analysis tracking employee concentrations across explicit monetary bands (e.g., $0\text{--}25\text{k}$, $25\text{k}\text{--}50\text{k}$, $50\text{k}\text{--}75\text{k}$, $75\text{k}\text{--}100\text{k}$, $100\text{k}+$)[cite: 2, 3].
-*   **Compensation Insights:** Explicit identification arrays reporting top-earning personnel, highest/lowest compensated departments, and extreme designation vectors[cite: 2, 3].
+*   **Global Summary Metrics:** Total Headcount, Active vs. Inactive splits, aggregate payroll costs, organization-wide average, and median CTC metrics.
+*   **Department Breakdown:** Headcount, minimum/maximum ranges, average allocations, and total payroll spends categorized per department.
+*   **Designation Analytics:** Structural distribution arrays showing employee concentrations and associated average salaries across functional job tiers.
+*   **Country Distribution:** Operational headcount matrices, localized currency tallies, and converted normalized USD payroll balances for global benchmarking.
+*   **Salary Band Distribution:** Stratified workforce distribution analysis tracking employee concentrations across explicit monetary bands.
+    Example bands
+    $0 – 25k
+    $25k – 50k
+    $50k – 75k
+    $75k – 100k
+    $100k+
+*   **Compensation Insights:** Explicit identification arrays reporting top-earning personnel, highest/lowest compensated departments, and extreme designation vectors.
 
 #### 4.3.2 Filtering & Reporting Export
-*   **Drill-Down Control:** Dashboard widgets are reactive to global filters (Country, Department, Status)[cite: 2, 3].
-*   **Export Profiles:** On-demand export generation translating active analytical configurations into flat CSV formatting for standard reporting workflows[cite: 2].
+*   **Drill-Down Control:** Dashboard widgets are reactive to global filters (Country, Department, Status).
+*   **Export Profiles:** On-demand export generation translating active analytical configurations into flat CSV formatting for standard reporting workflows.
 
 ---
 
