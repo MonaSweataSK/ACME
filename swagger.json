@@ -21,13 +21,15 @@
       "name": "Dashboard"
     },
     {
-      "name": "Analytics"
+      "name": "Master Data"
     }
   ],
   "paths": {
     "/employees": {
       "get": {
-        "tags": ["Employees"],
+        "tags": [
+          "Employees"
+        ],
         "summary": "Get employees",
         "parameters": [
           {
@@ -36,7 +38,8 @@
             "schema": {
               "type": "integer",
               "default": 1
-            }
+            },
+            "description": "Page number (Defaults to 1)"
           },
           {
             "name": "limit",
@@ -44,43 +47,80 @@
             "schema": {
               "type": "integer",
               "default": 20
-            }
+            },
+            "description": "Records per page for client virtualization scopes (Defaults to 20)"
           },
           {
             "name": "search",
             "in": "query",
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Multi-vector wild-card text search by employee code, name, email"
           },
           {
-            "name": "department",
+            "name": "departmentId",
             "in": "query",
             "schema": {
-              "type": "string"
-            }
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by department UUID"
           },
           {
-            "name": "designation",
+            "name": "designationId",
             "in": "query",
             "schema": {
-              "type": "string"
-            }
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by designation UUID"
           },
           {
-            "name": "country",
+            "name": "countryId",
             "in": "query",
             "schema": {
-              "type": "string"
-            }
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by country UUID"
           },
           {
             "name": "status",
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["ACTIVE", "INACTIVE"]
-            }
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            },
+            "description": "ACTIVE / INACTIVE"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "firstName",
+                "joinDate",
+                "totalCtc"
+              ]
+            },
+            "description": "Sort by field"
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            },
+            "description": "Sort order"
           }
         ],
         "responses": {
@@ -90,8 +130,10 @@
         }
       },
       "post": {
-        "tags": ["Employees"],
-        "summary": "Create employee",
+        "tags": [
+          "Employees"
+        ],
+        "summary": "Create Employee",
         "requestBody": {
           "required": true,
           "content": {
@@ -108,14 +150,23 @@
           },
           "409": {
             "description": "Duplicate email"
+          },
+          "400": {
+            "description": "Bad Request - Validation failed for employee profile or salary payload"
+          },
+          "422": {
+            "description": "Unprocessable Entity - Creation failed entirely, transaction rolled back"
           }
-        }
+        },
+        "description": "Registers a new hire within the database, auto-generating a unique employeeCode. It initializes the employee record and their starting salary contract inside a single, atomic database transaction block. Failure Handling Requirement: The transactional execution window must fail entirely if either the employee profile or the initial salary payload fails Zod schema validations or instantiation. This must throw a clean 400 Bad Request or 422 Unprocessable Entity, ensuring no orphan corporate identities are left dangling."
       }
     },
     "/employees/{id}": {
       "get": {
-        "tags": ["Employees"],
-        "summary": "Get employee details",
+        "tags": [
+          "Employees"
+        ],
+        "summary": "Get Employee Details",
         "parameters": [
           {
             "name": "id",
@@ -134,11 +185,14 @@
           "404": {
             "description": "Employee not found"
           }
-        }
+        },
+        "description": "Compiles a comprehensive employee master profile container matching the specified structural UUID path parameters alongside their complete historical pay scale timeline."
       },
       "put": {
-        "tags": ["Employees"],
-        "summary": "Update employee",
+        "tags": [
+          "Employees"
+        ],
+        "summary": "Update Employee",
         "parameters": [
           {
             "name": "id",
@@ -164,13 +218,16 @@
           "200": {
             "description": "Employee updated"
           }
-        }
+        },
+        "description": "Modifies basic administrative corporate configuration background vectors. Financial adjustments are blocked to protect historical line data integrity."
       }
     },
     "/employees/{id}/salary": {
       "post": {
-        "tags": ["Salary"],
-        "summary": "Create salary revision",
+        "tags": [
+          "Salary"
+        ],
+        "summary": "Add Salary Revision",
         "parameters": [
           {
             "name": "id",
@@ -196,115 +253,59 @@
           "201": {
             "description": "Salary revision created"
           }
-        }
+        },
+        "description": "Enforces historical compensation data log immutability via sequential execution blocks. It automatically processes total server-side calculations for Total CTC (Base + Bonus + Allowances) while handling transaction boundaries to safely shift active pointer tags."
       }
     },
-    "/dashboard/summary": {
+    "/dashboard/overview": {
       "get": {
-        "tags": ["Dashboard"],
-        "summary": "Dashboard summary",
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Unified dashboard overview",
         "responses": {
           "200": {
-            "description": "Dashboard metrics"
+            "description": "Dashboard and analytics data combined"
+          }
+        },
+        "description": "Compiles and flattens all high-level summary KPIs, multi-dimension analytical breakdowns, statistical salary band frequencies, and recent salary revision logs into a singular JSON payload. This single-pass engine uses a localized lookup matrix window on the backend to avoid concurrent query bottlenecking over SQLite's thread footprint, converting regional metrics cleanly into standardized USD for tracking visibility."
+      }
+    },
+    "/departments": {
+      "get": {
+        "tags": [
+          "Master Data"
+        ],
+        "summary": "Get Departments",
+        "responses": {
+          "200": {
+            "description": "Departments list"
           }
         }
       }
     },
-    "/dashboard/recent-salary-revisions": {
+    "/designations": {
       "get": {
-        "tags": ["Dashboard"],
-        "summary": "Recent salary revisions",
+        "tags": [
+          "Master Data"
+        ],
+        "summary": "Get Designations",
         "responses": {
           "200": {
-            "description": "Recent salary activity"
+            "description": "Designations list"
           }
         }
       }
     },
-    "/analytics/summary": {
+    "/countries": {
       "get": {
-        "tags": ["Analytics"],
-        "summary": "Analytics summary",
+        "tags": [
+          "Master Data"
+        ],
+        "summary": "Get Countries",
         "responses": {
           "200": {
-            "description": "Analytics overview"
-          }
-        }
-      }
-    },
-    "/analytics/by-department": {
-      "get": {
-        "tags": ["Analytics"],
-        "summary": "Department analytics",
-        "responses": {
-          "200": {
-            "description": "Department breakdown"
-          }
-        }
-      }
-    },
-    "/analytics/by-country": {
-      "get": {
-        "tags": ["Analytics"],
-        "summary": "Country analytics",
-        "responses": {
-          "200": {
-            "description": "Country breakdown"
-          }
-        }
-      }
-    },
-    "/analytics/by-designation": {
-      "get": {
-        "tags": ["Analytics"],
-        "summary": "Designation analytics",
-        "responses": {
-          "200": {
-            "description": "Designation breakdown"
-          }
-        }
-      }
-    },
-    "/analytics/salary-distribution": {
-      "get": {
-        "tags": ["Analytics"],
-        "summary": "Salary distribution",
-        "responses": {
-          "200": {
-            "description": "Salary bands"
-          }
-        }
-      }
-    },
-    "/analytics/hiring-trends": {
-      "get": {
-        "tags": ["Analytics"],
-        "summary": "Hiring trends",
-        "responses": {
-          "200": {
-            "description": "Hiring trend data"
-          }
-        }
-      }
-    },
-    "/analytics/payroll-trends": {
-      "get": {
-        "tags": ["Analytics"],
-        "summary": "Payroll trends",
-        "responses": {
-          "200": {
-            "description": "Payroll trend data"
-          }
-        }
-      }
-    },
-    "/analytics/top-earners": {
-      "get": {
-        "tags": ["Analytics"],
-        "summary": "Top earners",
-        "responses": {
-          "200": {
-            "description": "Highest paid employees"
+            "description": "Countries list"
           }
         }
       }
@@ -319,8 +320,8 @@
           "lastName",
           "email",
           "departmentId",
+          "designationId",
           "countryId",
-          "designation",
           "joinDate",
           "initialSalary"
         ],
@@ -339,12 +340,13 @@
             "type": "string",
             "format": "uuid"
           },
-          "countryId": {
+          "designationId": {
             "type": "string",
             "format": "uuid"
           },
-          "designation": {
-            "type": "string"
+          "countryId": {
+            "type": "string",
+            "format": "uuid"
           },
           "joinDate": {
             "type": "string",
@@ -364,11 +366,11 @@
           "lastName": {
             "type": "string"
           },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
           "departmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "designationId": {
             "type": "string",
             "format": "uuid"
           },
@@ -376,12 +378,12 @@
             "type": "string",
             "format": "uuid"
           },
-          "designation": {
-            "type": "string"
-          },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "INACTIVE"]
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
           }
         }
       },

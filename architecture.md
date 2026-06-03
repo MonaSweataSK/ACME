@@ -28,7 +28,7 @@
 │            Data Layer              │
 ├────────────────────────────────────┤
 │ Prisma ORM                         │
-│ PostgreSQL                         │
+│ SQLite                      │
 └────────────────────────────────────┘
 ```
 
@@ -41,7 +41,7 @@
 | Backend | Node.js |
 | Language | TypeScript |
 | Framework | Express.js |
-| Database | PostgreSQL |
+| Database | SQLite |
 | ORM | Prisma |
 | Validation | Zod |
 | Testing | Vitest |
@@ -51,13 +51,11 @@
 
 # Folder Structure
 
-```text
-server/
+```server/
 │
 ├── prisma/
-│   ├── schema.prisma
-│   ├── migrations/
-│   └── seed.ts
+│   ├── schema.prisma (Configured with the sqlite provider)
+│   └── seed.ts (Automated script generating 10,000 employees and logs)
 │
 ├── src/
 │   │
@@ -65,7 +63,7 @@ server/
 │   ├── index.ts
 │   │
 │   ├── lib/
-│   │   ├── prisma.ts
+│   │   ├── prisma.ts (Singleton Prisma instance container)
 │   │   └── errors.ts
 │   │
 │   ├── middleware/
@@ -76,20 +74,17 @@ server/
 │   ├── routes/
 │   │   ├── employee.routes.ts
 │   │   ├── salary.routes.ts
-│   │   ├── dashboard.routes.ts
-│   │   └── analytics.routes.ts
+│   │   └── dashboard.routes.ts (Unified Analytics & Summary Router)
 │   │
 │   ├── controllers/
 │   │   ├── employee.controller.ts
 │   │   ├── salary.controller.ts
-│   │   ├── dashboard.controller.ts
-│   │   └── analytics.controller.ts
+│   │   └── dashboard.controller.ts
 │   │
 │   ├── services/
 │   │   ├── employee.service.ts
 │   │   ├── salary.service.ts
-│   │   ├── dashboard.service.ts
-│   │   └── analytics.service.ts
+│   │   └── dashboard.service.ts (Compiles all data matrix components)
 │   │
 │   └── schemas/
 │       ├── employee.schema.ts
@@ -98,23 +93,47 @@ server/
 └── tests/
 ```
 
----
-
 # Database Architecture
 
-## Departments
+The system uses **SQLite** as the database and **Prisma ORM** for data modeling and access.
 
-Stores company departments.
+SQLite uses dynamic type affinity, while Prisma provides a structured schema layer that enforces relationships and constraints. Since the application is designed to support up to **10,000 employees**, indexes are added to frequently queried columns and foreign keys to ensure efficient filtering, searching, sorting, and pagination.
 
-### Table: departments
+---
 
-| Column | Type |
-|----------|--------|
-| id | UUID |
-| name | String |
-| created_at | Timestamp |
+# Entity Relationship Diagram
 
-### Example Departments
+```text
+               ┌──────────────┐
+               │  countries   │
+               └──────┬───────┘
+                      │ 1
+                      │
+                      │ N
+┌────────────────┐ 1  │    N ┌──────────────┐
+│  departments   ├───┼─────►│  employees   │
+└───────┬────────┘    │      └──────┬───────┘
+        │ 1           │             │ 1
+        │             │             │
+        │ N           │             │ N
+┌───────▼────────┐    │      ┌──────▼───────┐
+│  designations  │◄───┘      │salary_records│
+└────────────────┘           └──────────────┘
+```
+
+---
+
+# Table: departments
+
+Stores organizational departments.
+
+| Column | Type | Attributes |
+|----------|----------|------------|
+| id | UUID | Primary Key |
+| name | String | Unique |
+| created_at | Timestamp | |
+
+### Example Records
 
 - Engineering
 - Product
@@ -129,253 +148,202 @@ Stores company departments.
 
 ---
 
-## Designations
+# Table: designations
 
-Stores job titles available within departments.
+Stores job titles associated with departments.
 
-### Table: designations
+| Column | Type | Attributes |
+|----------|----------|------------|
+| id | UUID | Primary Key |
+| name | String | |
+| department_id | UUID | Foreign Key |
+| created_at | Timestamp | |
 
-| Column | Type |
-|----------|--------|
-| id | UUID |
-| name | String |
-| department_id | UUID |
-| created_at | Timestamp |
+### Example Records
 
-### Example Designations
-
-#### Engineering
 - Software Engineer
 - Senior Software Engineer
 - Staff Engineer
 - Engineering Manager
-
-#### Product
 - Product Manager
-- Senior Product Manager
-
-#### Design
-- UI Designer
 - UX Designer
 
-#### Finance
-- Finance Analyst
+---
 
-#### HR
-- HR Business Partner
+# Table: countries
+
+Stores country and currency information.
+
+| Column | Type | Attributes |
+|----------|----------|------------|
+| id | UUID | Primary Key |
+| name | String | Unique |
+| currency_code | String | |
+| created_at | Timestamp | |
 
 ---
 
-## Countries
+# Table: employees
 
-Stores employee countries and currencies.
+Stores employee profile and organizational information.
 
-### Table: countries
+| Column | Type | Attributes |
+|----------|----------|------------|
+| id | UUID | Primary Key |
+| employee_code | String | Unique |
+| first_name | String | |
+| last_name | String | |
+| email | String | Unique |
+| department_id | UUID | Foreign Key |
+| designation_id | UUID | Foreign Key |
+| country_id | UUID | Foreign Key |
+| join_date | Date | |
+| status | Enum | ACTIVE / INACTIVE |
+| created_at | Timestamp | |
+| updated_at | Timestamp | |
 
-| Column | Type |
-|----------|--------|
-| id | UUID |
-| name | String |
-| currency_code | String |
-| created_at | Timestamp |
+## Performance Indexes
+
+Indexes are applied on:
+
+- employee_code
+- email
+- name
+- status
+- foreign key relationships
+
+These indexes enable efficient:
+
+- Search
+- Filtering
+- Sorting
+- Server-side pagination
 
 ---
 
-## Employees
+# Table: salary_records
 
-Stores employee profile information.
+Stores employee salary history as immutable audit records.
 
-### Table: employees
+| Column | Type | Attributes |
+|----------|----------|------------|
+| id | UUID | Primary Key |
+| employee_id | UUID | Foreign Key |
+| effective_date | Date | |
+| base_salary | Decimal | |
+| bonus | Decimal | |
+| allowances | Decimal | |
+| total_ctc | Decimal | System Calculated |
+| currency_code | String | |
+| reason | String | Required Audit Field |
+| is_active | Boolean | Indicates Current Salary Record |
+| created_at | Timestamp | |
 
-| Column | Type |
-|----------|--------|
-| id | UUID |
-| employee_code | String |
-| first_name | String |
-| last_name | String |
-| email | String |
-| department_id | UUID |
-| designation_id | UUID |
-| country_id | UUID |
-| join_date | Date |
-| status | Enum |
-| created_at | Timestamp |
-| updated_at | Timestamp |
+## Performance Indexes
 
-### Relationships
+A compound index is applied on:
 
 ```text
-Employee
- ├── Department
- ├── Designation
- ├── Country
- └── Salary Records
+(employee_id, is_active)
 ```
+
+This allows the application to instantly retrieve the currently active compensation record for an employee.
 
 ---
 
-## Salary Records
+# Salary History Model
 
-Stores employee salary history.
-
-### Table: salary_records
-
-| Column | Type |
-|----------|--------|
-| id | UUID |
-| employee_id | UUID |
-| effective_date | Date |
-| base_salary | Decimal |
-| bonus | Decimal |
-| allowances | Decimal |
-| total_ctc | Decimal |
-| currency_code | String |
-| reason | String |
-| created_at | Timestamp |
-
-### Relationship
+Salary records are maintained as immutable entries to preserve a complete compensation audit trail.
 
 ```text
 Employee
     │
-    ├── Salary Record 1
-    ├── Salary Record 2
-    ├── Salary Record 3
-    └── Salary Record N
+    ├── Salary Record 1 (is_active: false)
+    ├── Salary Record 2 (is_active: false)
+    └── Salary Record 3 (is_active: true)
+            ▲
+            │
+            └── Current Active Compensation Record
 ```
+
+---
+
+# Design Considerations
+
+- All entities use UUID-based primary keys.
+- Salary history is preserved for auditability and compliance.
+- Employees are linked to departments, designations, and countries through foreign keys.
+- Compensation records are versioned rather than updated in place.
+- Strategic indexing ensures fast query performance for datasets containing up to 10,000 employees.
+- Prisma ORM manages relationships, schema migrations, and type-safe database access.
 
 ---
 
 # API Architecture
 
-## Employee Module
+## 5.1 Employee Module
+Endpoints: 
+* GET /api/employees
+* GET /api/employees/:id
+* POST /api/employees
+* PUT /api/employees/:id
 
-### Endpoints
+Responsibilities: Paginated query parsing to match client virtualization scopes, multi-vector wild-card text searches, configuration updates, and relational profile compiling. For `POST /api/employees`, the transactional execution window must fail entirely if either the employee profile or the initial salary payload fails Zod schema validations or instantiation, throwing a clean 400 Bad Request or 422 Unprocessable Entity to prevent orphan corporate identities from leaking.
 
-```http
-GET    /employees
-GET    /employees/:id
+## 5.2 Salary Module
+Endpoints: 
+* POST /api/employees/:id/salary
 
-POST   /employees
-PUT    /employees/:id
-```
+Responsibilities: Enforces historical log immutability via sequential execution blocks, handles automated server-side calculation of Total CTC (Base + Bonus + Allowances), and manages atomic transaction boundaries (marking previous salary logs as inactive while inserting the new record).
 
-### Responsibilities
+## 5.3 Unified Dashboard & Analytics Module
+Endpoints: 
+* GET /api/dashboard/overview
 
-- Employee listing
-- Employee search
-- Employee filtering
-- Employee creation
-- Employee updates
-- Salary history retrieval
-
----
-
-## Salary Module
-
-### Endpoints
-
-```http
-POST /employees/:id/salary
-```
-
-### Responsibilities
-
-- Salary revisions
-- Salary history management
-- Total CTC calculation
-- Immutable salary records
-
----
-
-## Dashboard Module
-
-### Endpoint
-
-```http
-GET /dashboard/summary
-```
-
-### Responsibilities
-
-- Total employees
-- Active employees
-- Inactive employees
-- Total payroll cost
-- Average salary
-
----
-
-## Analytics Module
-
-### Endpoints
-
-```http
-GET /analytics/summary
-GET /analytics/by-department
-GET /analytics/by-country
-GET /analytics/by-designation
-GET /analytics/salary-distribution
-GET /analytics/hiring-trends
-GET /analytics/payroll-trends
-GET /analytics/top-earners
-```
-
-### Responsibilities
-
-- Department analytics
-- Country analytics
-- Designation analytics
-- Salary distribution insights
-- Hiring trend analysis
-- Payroll trend analysis
-- Compensation benchmarking
+Responsibilities: Compiles and flattens all high-level summary KPIs (Active headcount splits, corporate payroll expenditure, average/median CTC metrics), multi-dimension analytical breakdowns (Department, Designation, Country distributions), statistical salary band frequencies ($0-25k, $25k-50k, etc.), and the 5 most recent salary revision logs into a singular JSON payload to prevent concurrent read-lock overhead in SQLite
 
 ---
 
 # Request Flow
 
 ```text
-Request
+Client Request (Single Analytics Overview or Paginated List Fetch)
    │
    ▼
-Route
+Route Routing Gateway
    │
    ▼
-Controller
+Zod Input Schema Verification Middleware
    │
    ▼
-Validation
+Controller Interface Mapping Layer
    │
    ▼
-Service
+Service Layer (Aggregates Matrix Arrays / Executes Atomic Transactions)
    │
    ▼
-Prisma ORM
+Prisma ORM Client Query Compile
    │
    ▼
-PostgreSQL
+SQLite Native Execution Pipeline (.db Local File System)
    │
    ▼
-Response
+Centralized Global Exception Handler (Triggers rollback on application faults)
+   │
+   ▼
+Structured JSON Network Response Transmission
 ```
 
 ---
 
 # Key Design Decisions
 
-- Node.js + TypeScript backend
-- Express REST APIs
-- PostgreSQL database
-- Prisma ORM
-- Layered architecture (Route → Controller → Service)
-- Salary history is immutable
-- Department and Designation stored as separate entities
-- Designation belongs to a Department
-- Pagination for employee listing
-- Search and filtering support
-- Database indexing for performance
-- Zod validation for request payloads
-- Global error handling
-- Unit and integration testing
-- Seed dataset with 10,000 employees and salary history
+- Pivoted to SQLite Engine: Swapped from PostgreSQL to a local file system storage database layer to guarantee the reviewer enjoys a zero-dependency, zero-configuration onboarding experience.
+
+- Consolidated Single-Endpoint Aggregation: Merged separate analytical and dashboard summary endpoints into a singular route payload (/api/dashboard/overview) to run gracefully within SQLite's single-threaded nature, minimizing thread-lock overhead and preventing client UI flickering.
+
+- Strict Revision Immutability: Salary adjustments are exclusively write-only inserts rather than destructive inline table adjustments, preserving a complete corporate audit trail.
+
+- Multi-Currency Standardization: All multi-currency benchmarks are converted cleanly on the server into a standard reporting currency profile (USD) using a deterministic, internally seeded translation matrix to protect performance.
+
+- Scale and Memory Guardrails: Coupled server-side query pagination with frontend list virtualization to ensure the application processes the 10,000-employee dataset smoothly without browser thread locks or DOM bloat.
