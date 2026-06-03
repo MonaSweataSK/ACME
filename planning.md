@@ -98,7 +98,7 @@ To avoid network request concurrency bottlenecks and single-threaded SQLite writ
 
 ---
 
-## 10. Seed Data Generation Engine
+## 9. Seed Data Generation Engine
 ### Tasks
 * **Create a seed script** (`prisma/seed.ts`) that can be run from the command line.
 * **Why we use a static `usd_multiplier`:** The column holds a fixed conversion rate to USD, making conversion deterministic, removing the need for external services, and allowing all calculations to run inside a single Prisma transaction for atomicity and auditability.
@@ -107,7 +107,7 @@ To avoid network request concurrency bottlenecks and single-threaded SQLite writ
 
 ---
 
-## 11. Testing Suites (Unit & Integration)
+## 10. Testing Suites (Unit & Integration)
 ### Unit Tests
 * `employee.service.spec.ts`: Core validations, transaction controls, and programmatic code generation routines.
 * `salary.service.spec.ts`: Remuneration compounding checks, mathematical edge cases, and compliance flag routines.
@@ -119,6 +119,6 @@ To avoid network request concurrency bottlenecks and single-threaded SQLite writ
 
 ---
 
-## 12. Architectural Trade-offs & Guardrails
+## 11. Architectural Trade-offs & Guardrails
 * **Single Connection SQLite Focus:** Because SQLite operates out of a local system file, concurrent write locks could bottleneck performance. Consolidating analytics into a singular database connection pass protects system stability and keeps processing speeds under 150ms.
 * **Server-Driven Currency Consolidation:** Rather than pushing complex foreign exchange computations onto frontend UI loops, currency translations into the reference reporting profile (USD) are executed entirely server-side within the unified aggregation block.

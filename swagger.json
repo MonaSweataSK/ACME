@@ -3,7 +3,7 @@
   "info": {
     "title": "ACME Salary Management API",
     "version": "1.0.0",
-    "description": "REST API for managing employees, salaries, and analytics for ACME. All currency conversion to USD is performed server‑side using the static `usd_multiplier` column in the `countries` table."
+    "description": "REST API for managing employees, salaries, and analytics for ACME. All currency conversion to USD is performed server-side using the static `usd_multiplier` column in the `countries` table."
   },
   "servers": [
     {
@@ -60,7 +60,7 @@
         "summary": "Get Countries",
         "responses": {
           "200": {
-            "description": "List of countries with USD multiplier",
+            "description": "List of countries",
             "content": {
               "application/json": {
                 "schema": {
@@ -72,48 +72,325 @@
         }
       }
     },
-    "/analytics": {
+    "/employees": {
       "get": {
         "tags": [
-          "Analytics"
+          "Employee"
         ],
-        "summary": "Unified analytics endpoint",
-        "description": "Compiles and flattens all high‑level KPIs, multi‑dimensional breakdowns, statistical salary‑band frequencies, and recent salary‑revision logs into a single JSON payload. Server‑side conversion to USD uses the static `usd_multiplier` column for deterministic results.",
+        "summary": "Get Employees",
+        "description": "Returns a paginated, filterable, searchable list of employees. Defaults: page=1, limit=20.",
         "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (default: 1)",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Records per page (default: 20)",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Wildcard search across employee code, name, and email",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "departmentId",
             "in": "query",
+            "description": "Filter by department UUID",
             "schema": {
               "type": "string",
               "format": "uuid"
-            },
-            "description": "Filter by department UUID"
+            }
+          },
+          {
+            "name": "designationId",
+            "in": "query",
+            "description": "Filter by designation UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
           {
             "name": "countryId",
             "in": "query",
+            "description": "Filter by country UUID",
             "schema": {
               "type": "string",
               "format": "uuid"
-            },
-            "description": "Filter by country UUID"
+            }
           },
           {
             "name": "status",
             "in": "query",
+            "description": "Filter by employment status",
             "schema": {
               "type": "string",
               "enum": [
                 "ACTIVE",
                 "INACTIVE"
               ]
-            },
-            "description": "Filter by employee status"
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Field to sort by",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "firstName",
+                "joinDate",
+                "totalCtc"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Dashboard and analytics data combined",
+            "description": "Paginated list of employees",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Employee"
+        ],
+        "summary": "Create Employee",
+        "description": "Registers a new employee and their initial salary record in a single atomic transaction. Fails entirely with 400/422 if either the employee or salary payload is invalid — no orphan records are created.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Employee created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — transaction rolled back"
+          },
+          "422": {
+            "description": "Unprocessable entity — transaction rolled back"
+          }
+        }
+      }
+    },
+    "/employees/{id}": {
+      "get": {
+        "tags": [
+          "Employee"
+        ],
+        "summary": "Get Employee Details",
+        "description": "Returns the full employee profile including department, designation, country objects, and complete salary history.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Employee detail with salary history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Employee not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Employee"
+        ],
+        "summary": "Update Employee",
+        "description": "Updates non-financial employee fields. Salary changes are blocked here — use POST /employees/{id}/salary instead.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Employee updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Employee updated successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Employee not found"
+          }
+        }
+      }
+    },
+    "/employees/{id}/salary": {
+      "post": {
+        "tags": [
+          "Salary"
+        ],
+        "summary": "Add Salary Revision",
+        "description": "Inserts a new immutable salary record and marks the previous active record as inactive — all within a single atomic transaction. Total CTC is calculated server-side.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SalaryRevisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Salary revision created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalaryRevisionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Employee not found"
+          }
+        }
+      }
+    },
+    "/analytics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Unified analytics endpoint",
+        "description": "Returns all dashboard KPIs, distribution breakdowns, salary band frequencies, and the 5 most recent salary revisions in a single payload. All monetary values are in USD. Filters narrow all blocks (summary, distributions, bands, revisions) to the matching employee subset.",
+        "parameters": [
+          {
+            "name": "departmentId",
+            "in": "query",
+            "description": "Filter by department UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "countryId",
+            "in": "query",
+            "description": "Filter by country UUID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by employee status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unified analytics payload",
             "content": {
               "application/json": {
                 "schema": {
@@ -131,42 +408,42 @@
           "Analytics"
         ],
         "summary": "Export analytics to CSV",
-        "description": "Generates an on‑demand CSV file containing the currently filtered analytics view (same filter parameters as the `/analytics` endpoint).",
+        "description": "Generates a downloadable CSV of the filtered employee dataset. Accepts the same filter parameters as GET /analytics.",
         "parameters": [
           {
             "name": "departmentId",
             "in": "query",
+            "description": "Filter by department UUID",
             "schema": {
               "type": "string",
               "format": "uuid"
-            },
-            "description": "Filter by department UUID"
+            }
           },
           {
             "name": "countryId",
             "in": "query",
+            "description": "Filter by country UUID",
             "schema": {
               "type": "string",
               "format": "uuid"
-            },
-            "description": "Filter by country UUID"
+            }
           },
           {
             "name": "status",
             "in": "query",
+            "description": "Filter by employee status",
             "schema": {
               "type": "string",
               "enum": [
                 "ACTIVE",
                 "INACTIVE"
               ]
-            },
-            "description": "Filter by employee status"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "CSV file",
+            "description": "CSV file download",
             "content": {
               "text/csv": {
                 "schema": {
@@ -178,68 +455,10 @@
           }
         }
       }
-    },
-    "/employees": {
-      "get": {
-        "tags": ["Employee"],
-        "summary": "Get Employees",
-        "parameters": [
-          {"name": "page", "in": "query", "schema": {"type": "integer"}},
-          {"name": "limit", "in": "query", "schema": {"type": "integer"}},
-          {"name": "search", "in": "query", "schema": {"type": "string"}},
-          {"name": "departmentId", "in": "query", "schema": {"type": "string", "format": "uuid"}},
-          {"name": "designationId", "in": "query", "schema": {"type": "string", "format": "uuid"}},
-          {"name": "countryId", "in": "query", "schema": {"type": "string", "format": "uuid"}},
-          {"name": "status", "in": "query", "schema": {"type": "string", "enum": ["ACTIVE","INACTIVE"]}}
-        ],
-        "responses": {"200": {"description": "List of employees", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmployeeList"}}}}}
-      },
-      "post": {
-        "tags": ["Employee"],
-        "summary": "Create Employee",
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmployeeCreateRequest"}}}},
-        "responses": {"201": {"description": "Created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmployeeCreateResponse"}}}}}
-      }
-    },
-    "/employees/{id}": {
-      "get": {
-        "tags": ["Employee"],
-        "summary": "Get Employee Details",
-        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
-        "responses": {"200": {"description": "Employee detail", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Employee"}}}}}
-      },
-      "put": {
-        "tags": ["Employee"],
-        "summary": "Update Employee",
-        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/EmployeeUpdateRequest"}}}},
-        "responses": {"200": {"description": "Updated", "content": {"application/json": {"schema": {"type": "object", "properties": {"message": {"type": "string"}}}}}}}
-      }
-    },
-    "/employees/{id}/salary": {
-      "post": {
-        "tags": ["Salary"],
-        "summary": "Add Salary Revision",
-        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
-        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SalaryRevisionRequest"}}}},
-        "responses": {"201": {"description": "Created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SalaryRevisionResponse"}}}}}
-      }
     }
-    
   },
   "components": {
     "schemas": {
-      "DepartmentList": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Department"
-            }
-          }
-        }
-      },
       "Department": {
         "type": "object",
         "required": [
@@ -256,13 +475,13 @@
           }
         }
       },
-      "DesignationList": {
+      "DepartmentList": {
         "type": "object",
         "properties": {
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Designation"
+              "$ref": "#/components/schemas/Department"
             }
           }
         }
@@ -280,6 +499,42 @@
           },
           "name": {
             "type": "string"
+          },
+          "departmentId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "DesignationList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Designation"
+            }
+          }
+        }
+      },
+      "Country": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "currencyCode"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "currencyCode": {
+            "type": "string",
+            "example": "INR"
           }
         }
       },
@@ -294,67 +549,356 @@
           }
         }
       },
-      "Country": {
+      "CurrentSalary": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "currencyCode",
-          "usdMultiplier"
-        ],
+        "properties": {
+          "totalCtc": {
+            "type": "number",
+            "example": 1200000
+          },
+          "currencyCode": {
+            "type": "string",
+            "example": "INR"
+          }
+        }
+      },
+      "EmployeeListItem": {
+        "type": "object",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
-          "name": {
+          "employeeCode": {
+            "type": "string",
+            "example": "EMP-00001"
+          },
+          "firstName": {
             "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "department": {
+            "type": "string",
+            "example": "Engineering"
+          },
+          "designation": {
+            "type": "string",
+            "example": "Software Engineer"
+          },
+          "country": {
+            "type": "string",
+            "example": "India"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "currentSalary": {
+            "$ref": "#/components/schemas/CurrentSalary"
+          }
+        }
+      },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "example": 10000
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 500
+          }
+        }
+      },
+      "EmployeeList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmployeeListItem"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        }
+      },
+      "SalaryRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "baseSalary": {
+            "type": "number"
+          },
+          "bonus": {
+            "type": "number"
+          },
+          "allowances": {
+            "type": "number"
+          },
+          "totalCtc": {
+            "type": "number"
           },
           "currencyCode": {
             "type": "string",
             "example": "INR"
           },
-          "usdMultiplier": {
-            "type": "number",
-            "description": "Static exchange‑rate multiplier used to convert the country’s local currency to USD. Stored in the `countries` table for deterministic, zero‑dependency conversion."
+          "reason": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
           }
         }
       },
-      "AnalyticsResponse": {
+      "EmployeeDetail": {
         "type": "object",
         "properties": {
-          "summary": {
-            "$ref": "#/components/schemas/Summary"
+          "id": {
+            "type": "string",
+            "format": "uuid"
           },
-          "departmentDistribution": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DepartmentAnalytics"
+          "employeeCode": {
+            "type": "string",
+            "example": "EMP-00001"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "department": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
             }
           },
-          "countryDistribution": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CountryAnalytics"
+          "designation": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
             }
           },
-          "designationDistribution": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DesignationAnalytics"
+          "country": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "currencyCode": {
+                "type": "string",
+                "example": "INR"
+              }
             }
           },
-          "salaryBands": {
+          "salaryHistory": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/SalaryBand"
+              "$ref": "#/components/schemas/SalaryRecord"
             }
+          }
+        }
+      },
+      "EmployeeCreateRequest": {
+        "type": "object",
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "departmentId",
+          "designationId",
+          "countryId",
+          "joinDate",
+          "initialSalary"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string"
           },
-          "recentRevisions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecentRevision"
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "departmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "designationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "countryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "joinDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "initialSalary": {
+            "type": "object",
+            "required": [
+              "baseSalary",
+              "bonus",
+              "allowances",
+              "effectiveDate",
+              "reason"
+            ],
+            "properties": {
+              "baseSalary": {
+                "type": "number"
+              },
+              "bonus": {
+                "type": "number"
+              },
+              "allowances": {
+                "type": "number"
+              },
+              "effectiveDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "reason": {
+                "type": "string"
+              }
             }
+          }
+        }
+      },
+      "EmployeeCreateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeCode": {
+            "type": "string",
+            "example": "EMP-00001"
+          }
+        }
+      },
+      "EmployeeUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "departmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "designationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "countryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        }
+      },
+      "SalaryRevisionRequest": {
+        "type": "object",
+        "required": [
+          "effectiveDate",
+          "baseSalary",
+          "bonus",
+          "allowances",
+          "reason"
+        ],
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "baseSalary": {
+            "type": "number"
+          },
+          "bonus": {
+            "type": "number"
+          },
+          "allowances": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "SalaryRevisionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "totalCtc": {
+            "type": "number"
           }
         }
       },
@@ -380,45 +924,31 @@
           },
           "medianSalaryUSD": {
             "type": "number",
-            "format": "float"
+            "format": "float",
+            "description": "Median salary in USD. Calculated by sorting all active salary records and picking the middle value (or average of two middle values for even counts)."
           }
         }
       },
       "DepartmentAnalytics": {
         "type": "object",
         "properties": {
-          "departmentId": {
+          "departmentName": {
             "type": "string",
-            "format": "uuid"
+            "example": "Engineering"
           },
           "headcount": {
             "type": "integer"
           },
-          "minSalaryUsd": {
+          "averageSalaryUSD": {
             "type": "number"
           },
-          "maxSalaryUsd": {
+          "minSalaryUSD": {
             "type": "number"
           },
-          "avgSalaryUsd": {
+          "maxSalaryUSD": {
             "type": "number"
           },
-          "totalPayrollUsd": {
-            "type": "number"
-          }
-        }
-      },
-      "CountryAnalytics": {
-        "type": "object",
-        "properties": {
-          "countryId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "headcount": {
-            "type": "integer"
-          },
-          "totalPayrollUsd": {
+          "totalPayrollUSD": {
             "type": "number"
           }
         }
@@ -426,14 +956,38 @@
       "DesignationAnalytics": {
         "type": "object",
         "properties": {
-          "designationId": {
+          "designationName": {
             "type": "string",
-            "format": "uuid"
+            "example": "Software Engineer"
           },
           "headcount": {
             "type": "integer"
           },
-          "avgSalaryUsd": {
+          "averageSalaryUSD": {
+            "type": "number"
+          },
+          "minSalaryUSD": {
+            "type": "number"
+          },
+          "maxSalaryUSD": {
+            "type": "number"
+          }
+        }
+      },
+      "CountryAnalytics": {
+        "type": "object",
+        "properties": {
+          "countryName": {
+            "type": "string",
+            "example": "India"
+          },
+          "headcount": {
+            "type": "integer"
+          },
+          "averageSalaryUSD": {
+            "type": "number"
+          },
+          "totalPayrollUSD": {
             "type": "number"
           }
         }
@@ -450,106 +1004,65 @@
           }
         }
       },
-      "SalaryRevision": {
-        "type": "object",
-        "properties": {
-          "employeeId": {"type": "string", "format": "uuid"},
-          "revisionDate": {"type": "string", "format": "date-time"},
-          "baseSalaryUsd": {"type": "number"},
-          "bonusUsd": {"type": "number"},
-          "allowancesUsd": {"type": "number"},
-          "totalCtcUsd": {"type": "number"}
-        }
-      },
       "RecentRevision": {
         "type": "object",
         "properties": {
-          "employeeCode": {"type": "string"},
-          "name": {"type": "string"},
-          "effectiveDate": {"type": "string", "format": "date"},
-          "totalCtcUSD": {"type": "number"},
-          "reason": {"type": "string"}
+          "employeeCode": {
+            "type": "string",
+            "example": "EMP-00001"
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "totalCtcUSD": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
         }
       },
-      "Employee": {
+      "AnalyticsResponse": {
         "type": "object",
         "properties": {
-          "id": {"type": "string", "format": "uuid"},
-          "employeeCode": {"type": "string"},
-          "firstName": {"type": "string"},
-          "lastName": {"type": "string"},
-          "email": {"type": "string"},
-          "department": {"type": "string"},
-          "designation": {"type": "string"},
-          "country": {"type": "string"},
-          "status": {"type": "string"},
-          "currentSalary": {"type": "object"}
-        }
-      },
-      "EmployeeList": {
-        "type": "object",
-        "properties": {
-          "data": {"type": "array", "items": {"$ref": "#/components/schemas/Employee"}}
-        }
-      },
-      "EmployeeCreateRequest": {
-        "type": "object",
-        "properties": {
-          "firstName": {"type": "string"},
-          "lastName": {"type": "string"},
-          "email": {"type": "string"},
-          "departmentId": {"type": "string", "format": "uuid"},
-          "designationId": {"type": "string", "format": "uuid"},
-          "countryId": {"type": "string", "format": "uuid"},
-          "joinDate": {"type": "string", "format": "date"},
-          "initialSalary": {
-            "type": "object",
-            "properties": {
-              "baseSalary": {"type": "number"},
-              "bonus": {"type": "number"},
-              "allowances": {"type": "number"},
-              "effectiveDate": {"type": "string", "format": "date"},
-              "reason": {"type": "string"}
+          "summary": {
+            "$ref": "#/components/schemas/Summary"
+          },
+          "departmentDistribution": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentAnalytics"
+            }
+          },
+          "designationDistribution": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DesignationAnalytics"
+            }
+          },
+          "countryDistribution": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CountryAnalytics"
+            }
+          },
+          "salaryBands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SalaryBand"
+            }
+          },
+          "recentRevisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecentRevision"
             }
           }
-        },
-        "required": ["firstName", "lastName", "email", "departmentId", "designationId", "countryId", "joinDate", "initialSalary"]
-      },
-      "EmployeeCreateResponse": {
-        "type": "object",
-        "properties": {
-          "id": {"type": "string", "format": "uuid"},
-          "employeeCode": {"type": "string"}
-        }
-      },
-      "EmployeeUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "firstName": {"type": "string"},
-          "lastName": {"type": "string"},
-          "email": {"type": "string", "format": "email"},
-          "departmentId": {"type": "string", "format": "uuid"},
-          "designationId": {"type": "string", "format": "uuid"},
-          "countryId": {"type": "string", "format": "uuid"},
-          "status": {"type": "string"}
-        }
-      },
-      "SalaryRevisionRequest": {
-        "type": "object",
-        "properties": {
-          "effectiveDate": {"type": "string", "format": "date"},
-          "baseSalary": {"type": "number"},
-          "bonus": {"type": "number"},
-          "allowances": {"type": "number"},
-          "reason": {"type": "string"}
-        },
-        "required": ["effectiveDate", "baseSalary", "bonus", "allowances", "reason"]
-      },
-      "SalaryRevisionResponse": {
-        "type": "object",
-        "properties": {
-          "id": {"type": "string", "format": "uuid"},
-          "totalCtc": {"type": "number"}
         }
       }
     }

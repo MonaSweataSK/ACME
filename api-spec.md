@@ -275,7 +275,7 @@ This single-pass engine uses a localized lookup matrix window on the backend to 
   },
   "departmentDistribution": [
     {
-      "department": "Engineering",
+      "departmentName": "Engineering",
       "headcount": 3000,
       "averageSalaryUSD": 40000,
       "minSalaryUSD": 15000,
@@ -285,7 +285,7 @@ This single-pass engine uses a localized lookup matrix window on the backend to 
   ],
   "designationDistribution": [
     {
-      "designation": "Software Engineer",
+      "designationName": "Software Engineer",
       "headcount": 1200,
       "averageSalaryUSD": 25000,
       "minSalaryUSD": 15000,
@@ -294,7 +294,7 @@ This single-pass engine uses a localized lookup matrix window on the backend to 
   ],
   "countryDistribution": [
     {
-      "country": "India",
+      "countryName": "India",
       "headcount": 4000,
       "averageSalaryUSD": 22000,
       "totalPayrollUSD": 88000000
@@ -303,11 +303,11 @@ This single-pass engine uses a localized lookup matrix window on the backend to 
   "salaryBands": [
     {
       "range": "0-25k",
-      "employees": 2500
+      "employeeCount": 2500
     },
     {
       "range": "25k-50k",
-      "employees": 4200
+      "employeeCount": 4200
     }
   ],
   "recentRevisions": [
