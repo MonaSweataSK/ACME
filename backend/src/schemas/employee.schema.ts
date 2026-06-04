@@ -32,3 +32,18 @@ export const CreateEmployeeSchema = z.object({
 });
 
 export type CreateEmployee = z.infer<typeof CreateEmployeeSchema>;
+
+export const UpdateEmployeeSchema = z
+  .object({
+    firstName: z.string().min(1, 'First name cannot be empty').optional(),
+    lastName: z.string().min(1, 'Last name cannot be empty').optional(),
+    departmentId: z.string().uuid('Invalid department ID').optional(),
+    designationId: z.string().uuid('Invalid designation ID').optional(),
+    countryId: z.string().uuid('Invalid country ID').optional(),
+    status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'Request body must contain at least one field to update',
+  });
+
+export type UpdateEmployee = z.infer<typeof UpdateEmployeeSchema>;

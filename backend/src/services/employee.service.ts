@@ -1,6 +1,6 @@
 import prisma from '../lib/prisma';
 import { NotFoundError, ConflictError } from '../lib/errors';
-import type { GetEmployeesQuery, CreateEmployee } from '../schemas/employee.schema';
+import type { GetEmployeesQuery, CreateEmployee, UpdateEmployee } from '../schemas/employee.schema';
 import type { Prisma } from '@prisma/client';
 
 export async function getEmployees(query: GetEmployeesQuery) {
@@ -247,4 +247,44 @@ export async function createEmployee(data: CreateEmployee) {
     id: result.id,
     employeeCode: result.employee_code,
   };
+}
+
+export async function updateEmployee(id: string, data: UpdateEmployee) {
+  // Check if employee exists
+  const existing = await prisma.employee.findUnique({ where: { id } });
+  if (!existing) {
+    throw new NotFoundError('Employee');
+  }
+
+  // Validate FK references if provided
+  if (data.countryId) {
+    const country = await prisma.country.findUnique({ where: { id: data.countryId } });
+    if (!country) throw new NotFoundError('Country');
+  }
+
+  if (data.departmentId) {
+    const department = await prisma.department.findUnique({ where: { id: data.departmentId } });
+    if (!department) throw new NotFoundError('Department');
+  }
+
+  if (data.designationId) {
+    const designation = await prisma.designation.findUnique({ where: { id: data.designationId } });
+    if (!designation) throw new NotFoundError('Designation');
+  }
+
+  // Build the update payload
+  const updateData: Prisma.EmployeeUpdateInput = {};
+  if (data.firstName !== undefined) updateData.first_name = data.firstName;
+  if (data.lastName !== undefined) updateData.last_name = data.lastName;
+  if (data.status !== undefined) updateData.status = data.status;
+  if (data.departmentId !== undefined) updateData.department = { connect: { id: data.departmentId } };
+  if (data.designationId !== undefined) updateData.designation = { connect: { id: data.designationId } };
+  if (data.countryId !== undefined) updateData.country = { connect: { id: data.countryId } };
+
+  await prisma.employee.update({
+    where: { id },
+    data: updateData,
+  });
+
+  return { message: 'Employee updated successfully' };
 }

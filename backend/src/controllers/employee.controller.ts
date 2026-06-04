@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { getEmployees, getEmployeeById, createEmployee } from '../services/employee.service';
-import type { GetEmployeesQuery, CreateEmployee } from '../schemas/employee.schema';
+import { getEmployees, getEmployeeById, createEmployee, updateEmployee } from '../services/employee.service';
+import type { GetEmployeesQuery, CreateEmployee, UpdateEmployee } from '../schemas/employee.schema';
 
 export async function listEmployees(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -29,6 +29,20 @@ export async function createEmployeeHandler(
   try {
     const result = await createEmployee(req.body as CreateEmployee);
     res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateEmployeeHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { id } = req.params as { id: string };
+    const result = await updateEmployee(id, req.body as UpdateEmployee);
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
