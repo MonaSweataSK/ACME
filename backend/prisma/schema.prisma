@@ -1,0 +1,95 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Country {
+  id             String     @id @default(uuid())
+  name           String     @unique
+  currency_code  String
+  usd_multiplier Float
+  created_at     DateTime   @default(now())
+
+  employees      Employee[]
+
+  @@map("countries")
+}
+
+model Department {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  created_at   DateTime      @default(now())
+
+  designations Designation[]
+  employees    Employee[]
+
+  @@map("departments")
+}
+
+model Designation {
+  id            String     @id @default(uuid())
+  name          String
+  department_id String
+  created_at    DateTime   @default(now())
+
+  department    Department @relation(fields: [department_id], references: [id], onDelete: Restrict)
+  employees     Employee[]
+
+  @@map("designations")
+}
+
+model Employee {
+  id             String          @id @default(uuid())
+  employee_code  String          @unique
+  first_name     String
+  last_name      String
+  email          String          @unique
+  department_id  String
+  designation_id String
+  country_id     String
+  join_date      DateTime
+  status         String          @default("ACTIVE") // "ACTIVE" | "INACTIVE"
+  
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+
+  department     Department      @relation(fields: [department_id], references: [id], onDelete: Restrict)
+  designation    Designation     @relation(fields: [designation_id], references: [id], onDelete: Restrict)
+  country        Country         @relation(fields: [country_id], references: [id], onDelete: Restrict)
+  
+  salary_records SalaryRecord[]
+
+  @@index([employee_code])
+  @@index([email])
+  @@index([first_name, last_name])
+  @@index([status])
+  @@index([department_id])
+  @@index([country_id])
+  @@index([department_id, country_id, status])
+
+  @@map("employees")
+}
+
+model SalaryRecord {
+  id             String    @id @default(uuid())
+  employee_id    String
+  effective_date DateTime
+  base_salary    Float
+  bonus          Float     @default(0)
+  allowances     Float     @default(0)
+  total_ctc      Float
+  currency_code  String
+  reason         String
+  is_active      Boolean   @default(true)
+  created_at     DateTime  @default(now())
+
+  employee       Employee  @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  
+  @@index([employee_id, is_active])
+
+  @@map("salary_records")
+}
