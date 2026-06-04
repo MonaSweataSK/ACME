@@ -1,6 +1,6 @@
 import prisma from '../lib/prisma';
-import { NotFoundError } from '../lib/errors';
-import type { GetEmployeesQuery } from '../schemas/employee.schema';
+import { NotFoundError, ConflictError } from '../lib/errors';
+import type { GetEmployeesQuery, CreateEmployee } from '../schemas/employee.schema';
 import type { Prisma } from '@prisma/client';
 
 export async function getEmployees(query: GetEmployeesQuery) {
@@ -170,5 +170,81 @@ export async function getEmployeeById(id: string) {
       isActive: s.is_active,
       createdAt: s.created_at,
     })),
+  };
+}
+
+/**
+ * Generates a zero-padded sequential employee code e.g. EMP-00001.
+ * Runs inside the transaction to guarantee uniqueness under concurrent inserts.
+ */
+async function generateEmployeeCode(tx: Prisma.TransactionClient): Promise<string> {
+  const count = await tx.employee.count();
+  const next = count + 1;
+  return `EMP-${String(next).padStart(5, '0')}`;
+}
+
+export async function createEmployee(data: CreateEmployee) {
+  const { firstName, lastName, email, departmentId, designationId, countryId, joinDate, initialSalary } =
+    data;
+
+  // Verify country exists and fetch currency_code for the salary record
+  const country = await prisma.country.findUnique({
+    where: { id: countryId },
+    select: { currency_code: true },
+  });
+  if (!country) throw new NotFoundError('Country');
+
+  // Verify department and designation exist
+  const department = await prisma.department.findUnique({ where: { id: departmentId } });
+  if (!department) throw new NotFoundError('Department');
+
+  const designation = await prisma.designation.findUnique({ where: { id: designationId } });
+  if (!designation) throw new NotFoundError('Designation');
+
+  // Check email uniqueness before entering the transaction
+  const existing = await prisma.employee.findUnique({ where: { email } });
+  if (existing) throw new ConflictError('An employee with this email already exists');
+
+  // Server-side CTC calculation
+  const total_ctc = initialSalary.baseSalary + initialSalary.bonus + initialSalary.allowances;
+
+  // Atomic transaction: generate code + create employee + create salary record
+  const result = await prisma.$transaction(async (tx) => {
+    const employee_code = await generateEmployeeCode(tx);
+
+    const employee = await tx.employee.create({
+      data: {
+        employee_code,
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        department_id: departmentId,
+        designation_id: designationId,
+        country_id: countryId,
+        join_date: joinDate,
+        status: 'ACTIVE',
+      },
+    });
+
+    await tx.salaryRecord.create({
+      data: {
+        employee_id: employee.id,
+        base_salary: initialSalary.baseSalary,
+        bonus: initialSalary.bonus,
+        allowances: initialSalary.allowances,
+        total_ctc,
+        currency_code: country.currency_code,
+        effective_date: initialSalary.effectiveDate,
+        reason: initialSalary.reason,
+        is_active: true,
+      },
+    });
+
+    return employee;
+  });
+
+  return {
+    id: result.id,
+    employeeCode: result.employee_code,
   };
 }

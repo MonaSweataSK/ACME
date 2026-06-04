@@ -13,3 +13,22 @@ export const GetEmployeesQuerySchema = z.object({
 });
 
 export type GetEmployeesQuery = z.infer<typeof GetEmployeesQuerySchema>;
+
+export const CreateEmployeeSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Invalid email address'),
+  departmentId: z.string().uuid('Invalid department ID'),
+  designationId: z.string().uuid('Invalid designation ID'),
+  countryId: z.string().uuid('Invalid country ID'),
+  joinDate: z.coerce.date(),
+  initialSalary: z.object({
+    baseSalary: z.number().positive('Base salary must be positive'),
+    bonus: z.number().min(0).default(0),
+    allowances: z.number().min(0).default(0),
+    effectiveDate: z.coerce.date(),
+    reason: z.string().min(1, 'Reason is required'),
+  }),
+});
+
+export type CreateEmployee = z.infer<typeof CreateEmployeeSchema>;
