@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { notFound } from './middleware/notFound';
 import { errorHandler } from './middleware/errorHandler';
 import employeeRoutes from './routes/employee.routes';
+import salaryRoutes from './routes/salary.routes';
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/employees', employeeRoutes);
+app.use('/api/employees', salaryRoutes);
 // app.use('/api/analytics', analyticsRoutes);
 
 // 404 handler — must come after all routes
