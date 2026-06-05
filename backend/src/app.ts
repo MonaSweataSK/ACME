@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/errorHandler';
 import employeeRoutes from './routes/employee.routes';
 import salaryRoutes from './routes/salary.routes';
 import analyticsRoutes from './routes/analytics.routes';
+import metadataRoutes from './routes/metadata.routes';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.get('/health', (req, res) => {
 app.use('/api/employees', employeeRoutes);
 app.use('/api/employees', salaryRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/metadata', metadataRoutes);
 
 // 404 handler — must come after all routes
 app.use(notFound);
