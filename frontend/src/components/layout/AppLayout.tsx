@@ -1,9 +1,13 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { LayoutDashboard, Users } from "lucide-react";
+import { LayoutDashboard, Users, Component } from "lucide-react";
+import { Toaster } from "../ui/Toast";
 
 export function AppLayout() {
+  const isDev = import.meta.env.DEV;
+
   return (
     <div className="flex h-screen w-full bg-[#09090b] text-slate-100 font-sans">
+      <Toaster />
       {/* Sidebar Navigation */}
       <aside className="w-64 flex-shrink-0 border-r border-slate-800 bg-[#09090b]/50 backdrop-blur-md flex flex-col">
         <div className="p-6 border-b border-slate-800">
@@ -41,6 +45,22 @@ export function AppLayout() {
             <Users size={18} />
             Employee Directory
           </NavLink>
+
+          {isDev && (
+            <NavLink
+              to="/design-system"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors mt-8 border border-dashed border-slate-700 ${
+                  isActive
+                    ? "bg-slate-800 text-indigo-400 font-medium"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                }`
+              }
+            >
+              <Component size={18} />
+              Design System
+            </NavLink>
+          )}
         </nav>
         
         <div className="p-4 border-t border-slate-800">
