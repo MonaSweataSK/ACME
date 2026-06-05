@@ -29,10 +29,16 @@ async function main() {
 
   // Departments & Designations
   const departmentsData = [
-    { name: 'Engineering', roles: ['Software Engineer', 'Senior Software Engineer', 'Engineering Manager'] },
-    { name: 'Sales', roles: ['Sales Representative', 'Account Executive', 'Sales Director'] },
-    { name: 'HR', roles: ['HR Associate', 'HR Manager'] },
-    { name: 'Marketing', roles: ['Marketing Specialist', 'Marketing Director'] },
+    { name: 'Engineering', roles: ['Software Engineer', 'Senior Software Engineer', 'Staff Engineer', 'Engineering Manager', 'QA Engineer'] },
+    { name: 'Product', roles: ['Product Manager', 'Senior Product Manager', 'Technical Product Manager', 'Product Analyst', 'Director of Product'] },
+    { name: 'Design', roles: ['UX Designer', 'UI Designer', 'Senior Product Designer', 'UX Researcher', 'Design Manager'] },
+    { name: 'Sales', roles: ['Sales Development Representative', 'Account Executive', 'Enterprise Account Executive', 'Sales Manager', 'VP of Sales'] },
+    { name: 'Marketing', roles: ['Content Marketer', 'Digital Marketing Specialist', 'SEO Specialist', 'Marketing Manager', 'CMO'] },
+    { name: 'Finance', roles: ['Financial Analyst', 'Senior Financial Analyst', 'Accountant', 'Finance Manager', 'CFO'] },
+    { name: 'HR', roles: ['HR Coordinator', 'Technical Recruiter', 'HR Business Partner', 'Compensation Analyst', 'HR Director'] },
+    { name: 'Operations', roles: ['Operations Associate', 'Operations Manager', 'Logistics Coordinator', 'Supply Chain Analyst', 'COO'] },
+    { name: 'Customer Success', roles: ['Customer Success Manager', 'Senior CSM', 'Customer Support Specialist', 'Implementation Specialist', 'VP of Customer Success'] },
+    { name: 'Data', roles: ['Data Analyst', 'Data Scientist', 'Machine Learning Engineer', 'Data Engineer', 'Analytics Manager'] },
   ];
 
   const departments = [];
