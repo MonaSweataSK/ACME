@@ -1,11 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
+import { Dashboard } from "./pages/Dashboard";
 import { DesignSystem } from "./pages/DesignSystem";
 import { Employees } from "./pages/Employees";
 import { EmployeeDetail } from "./pages/EmployeeDetail";
-
-// Temporary component placeholders for routing
-const DashboardPlaceholder = () => <div className="text-2xl font-bold text-slate-100">Dashboard (Placeholder)</div>;
 
 function App() {
   const isDev = import.meta.env.DEV;
@@ -14,7 +12,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<DashboardPlaceholder />} />
+          <Route path="/" element={<Dashboard />} />
           <Route path="/employees" element={<Employees />} />
           <Route path="/employees/:id" element={<EmployeeDetail />} />
           {isDev && <Route path="/design-system" element={<DesignSystem />} />}

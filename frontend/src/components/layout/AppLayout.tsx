@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { LayoutDashboard, Users, Component } from "lucide-react";
+import { PieChart, Users, Component } from "lucide-react";
 import { Toaster } from "../ui/Toast";
 
 export function AppLayout() {
@@ -19,20 +19,6 @@ export function AppLayout() {
         
         <nav className="flex-1 p-4 space-y-2">
           <NavLink
-            to="/"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                isActive
-                  ? "bg-slate-800 text-indigo-400 font-medium"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-              }`
-            }
-          >
-            <LayoutDashboard size={18} />
-            Dashboard
-          </NavLink>
-          
-          <NavLink
             to="/employees"
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
@@ -44,6 +30,20 @@ export function AppLayout() {
           >
             <Users size={18} />
             Employee Directory
+          </NavLink>
+
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                isActive
+                  ? "bg-slate-800 text-indigo-400 font-medium"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+              }`
+            }
+          >
+            <PieChart size={18} />
+            Analytics
           </NavLink>
 
           {isDev && (
