@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, User, Building, MapPin, Calendar, Mail, CheckCircle2, XCircle, Briefcase } from 'lucide-react';
+import { ArrowLeft, User, Building, MapPin, Calendar, Mail, CheckCircle2, XCircle, Briefcase, Pencil } from 'lucide-react';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
+import { EmployeeEditModal } from '../components/EmployeeEditModal';
 import { cn } from '../lib/utils';
 
 interface SalaryRecord {
@@ -35,6 +37,7 @@ interface EmployeeDetailData {
 export function EmployeeDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
 
   const { data: employee, isLoading, isError } = useQuery<EmployeeDetailData>({
     queryKey: ['employee', id],
@@ -96,6 +99,15 @@ export function EmployeeDetail() {
             )}>
               {employee.status}
             </span>
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={() => setIsEditing(true)} 
+              className="ml-2 h-7 px-2 gap-1.5"
+            >
+              <Pencil size={12} />
+              Edit
+            </Button>
           </h1>
           <p className="text-sm text-slate-400 font-mono mt-1">{employee.employeeCode}</p>
         </div>
@@ -233,6 +245,11 @@ export function EmployeeDetail() {
           </div>
         </div>
       </div>
+
+      <EmployeeEditModal 
+        employeeId={isEditing ? id || null : null} 
+        onClose={() => setIsEditing(false)} 
+      />
     </div>
   );
 }

@@ -17,7 +17,6 @@ function App() {
           <Route path="/" element={<DashboardPlaceholder />} />
           <Route path="/employees" element={<Employees />} />
           <Route path="/employees/:id" element={<EmployeeDetail />} />
-          <Route path="/employees/:id/edit" element={<EmployeeDetail />} />
           {isDev && <Route path="/design-system" element={<DesignSystem />} />}
         </Route>
       </Routes>

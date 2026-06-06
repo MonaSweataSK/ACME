@@ -7,6 +7,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Dropdown } from '../components/ui/Dropdown';
 import { Spinner } from '../components/ui/Spinner';
+import { EmployeeEditModal } from '../components/EmployeeEditModal';
 import { cn } from '../lib/utils';
 
 interface Employee {
@@ -44,6 +45,8 @@ export function Employees() {
   const [designationId, setDesignationId] = useState('');
   const [status, setStatus] = useState('');
   const [countryId, setCountryId] = useState('');
+
+  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -245,7 +248,7 @@ export function Employees() {
                           className="h-7 w-7 p-0 rounded-full"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/employees/${emp.id}/edit`);
+                            setEditingEmployeeId(emp.id);
                           }}
                         >
                           <Pencil size={14} className="text-slate-400" />
@@ -299,6 +302,11 @@ export function Employees() {
           </div>
         )}
       </div>
+
+      <EmployeeEditModal 
+        employeeId={editingEmployeeId} 
+        onClose={() => setEditingEmployeeId(null)} 
+      />
     </div>
   );
 }
