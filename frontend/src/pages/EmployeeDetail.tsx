@@ -28,6 +28,7 @@ interface EmployeeDetailData {
   email: string;
   status: string;
   joinDate: string;
+  avatarUrl: string | null;
   department: { id: string; name: string };
   designation: { id: string; name: string };
   country: { id: string; name: string; currency_code: string };
@@ -88,6 +89,30 @@ export function EmployeeDetail() {
         <Button variant="secondary" size="sm" onClick={() => navigate('/employees')} className="h-9 w-9 p-0">
           <ArrowLeft size={16} />
         </Button>
+        
+        {/* Avatar */}
+        <div className="relative h-16 w-16 flex-shrink-0">
+          {employee.avatarUrl ? (
+            <img
+              src={employee.avatarUrl}
+              alt={`${employee.firstName} ${employee.lastName}`}
+              className="h-16 w-16 rounded-full object-cover ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/10"
+              onError={(e) => {
+                const target = e.currentTarget;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement | null;
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div
+            className="h-16 w-16 rounded-full ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/10 bg-indigo-600 text-white text-lg font-bold items-center justify-center"
+            style={{ display: employee.avatarUrl ? 'none' : 'flex' }}
+          >
+            {employee.firstName[0]}{employee.lastName[0]}
+          </div>
+        </div>
+
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
             {employee.firstName} {employee.lastName}

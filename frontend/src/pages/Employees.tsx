@@ -19,6 +19,7 @@ interface Employee {
   status: string;
   department: string;
   designation: string;
+  avatarUrl: string | null;
   currentSalary: {
     totalCtc: number;
     currencyCode: string;
@@ -212,11 +213,36 @@ export function Employees() {
                     onClick={() => navigate(`/employees/${emp.id}`)}
                   >
                     <td className="px-6 py-4">
-                      <div className="font-medium text-slate-200">
-                        {emp.firstName} {emp.lastName}
-                      </div>
-                      <div className="text-xs text-slate-500 mt-0.5">
-                        <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">{emp.employeeCode}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-9 w-9 flex-shrink-0">
+                          {emp.avatarUrl ? (
+                            <img
+                              src={emp.avatarUrl}
+                              alt={`${emp.firstName} ${emp.lastName}`}
+                              className="h-9 w-9 rounded-full object-cover ring-2 ring-slate-700"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement | null;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className="h-9 w-9 rounded-full ring-2 ring-slate-700 bg-indigo-600 text-white text-xs font-semibold items-center justify-center"
+                            style={{ display: emp.avatarUrl ? 'none' : 'flex' }}
+                          >
+                            {emp.firstName[0]}{emp.lastName[0]}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-medium text-slate-200">
+                            {emp.firstName} {emp.lastName}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">{emp.employeeCode}</span>
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-slate-300">

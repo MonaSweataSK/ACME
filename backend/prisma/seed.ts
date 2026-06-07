@@ -90,6 +90,7 @@ async function main() {
       country_id: country.id,
       join_date: joinDate,
       status,
+      avatar_url: faker.image.avatar(),
       created_at: joinDate,
       updated_at: new Date(),
     });
