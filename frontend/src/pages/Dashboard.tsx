@@ -9,7 +9,6 @@ import { api } from '../lib/api';
 import { Dropdown } from '../components/ui/Dropdown';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
-import { cn } from '../lib/utils';
 
 interface AnalyticsData {
   summary: {
@@ -271,7 +270,7 @@ export function Dashboard() {
                       dataKey="headcount"
                       nameKey="countryName"
                     >
-                      {data.countryDistribution.map((entry, index) => (
+                      {data.countryDistribution.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
